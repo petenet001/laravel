@@ -1,36 +1,36 @@
-# CSRF Protection
+# Protection CSRF
 
 - [Introduction](#csrf-introduction)
-- [Excluding URIs](#csrf-excluding-uris)
+- [Exclusion d'URIs](#csrf-excluding-uris)
 - [X-CSRF-Token](#csrf-x-csrf-token)
 - [X-XSRF-Token](#csrf-x-xsrf-token)
 
 <a name="csrf-introduction"></a>
 ## Introduction
 
-Laravel makes it easy to protect your application from [cross-site request forgery](https://en.wikipedia.org/wiki/Cross-site_request_forgery) (CSRF) attacks. Cross-site request forgeries are a type of malicious exploit whereby unauthorized commands are performed on behalf of an authenticated user.
+Laravel vous permet de protéger facilement votre application des attaques CSRF ([Cross-Site Request Forgery](https://fr.wikipedia.org/wiki/Cross-site_request_forgery). Les *cross-site request forgeries* sont un type d'exploit malveillant par lequel des commandes non autorisées sont exécutées au nom d'un utilisateur authentifié.
 
-Laravel automatically generates a CSRF "token" for each active user session managed by the application. This token is used to verify that the authenticated user is the one actually making the requests to the application.
+Laravel génère automatiquement un "jeton" (*token*) CSRF pour chaque session d'utilisateur actif gérée par l'application. Ce jeton est utilisé pour vérifier que l'utilisateur authentifié est réellement celui qui éxecute la requête vers l'application.
 
-Anytime you define an HTML form in your application, you should include a hidden CSRF token field in the form so that the CSRF protection middleware can validate the request. You may use the `@csrf` Blade directive to generate the token field:
+À chaque fois que vous définissez un formulaire HTML dans votre application, vous devriez y inclure un champs caché de jeton CSRF pour permettre au middleware de protection CSRF de valider la requête. Vous pouvez utiliser la directive Blade `@csrf` pour générer le champs de jeton:
 
     <form method="POST" action="/profile">
         @csrf
         ...
     </form>
 
-The `VerifyCsrfToken` [middleware](/docs/{{version}}/middleware), which is included in the `web` middleware group, will automatically verify that the token in the request input matches the token stored in the session.
+Le [middleware](middleware) `VerifyCsrfToken`, qui est inclut dans le groupe de middleware `web`, vérifiera automatiquement que le jeton dans les données de la requête correspond au jeton stocké dans la session.
 
-#### CSRF Tokens & JavaScript
+#### Jetons CSRF & JavaScript
 
-When building JavaScript driven applications, it is convenient to have your JavaScript HTTP library automatically attach the CSRF token to every outgoing request. By default, the Axios HTTP library provided in the `resources/js/bootstrap.js` file automatically sends an `X-XSRF-TOKEN` header using the value of the encrypted `XSRF-TOKEN` cookie. If you are not using this library, you will need to manually configure this behavior for your application.
+Lors de la création d'applications pilotées par JavaScript, il est préférable de configurer votre bibliothèque HTTP JavaScript de façon à joindre le jeton CSRF à chaque requête. Par défaut, la librairie HTTP Axios dans le fichier `resources/js/bootstrap.js` envoie automatiquement un en-tête `X-XSRF-TOKEN` avec la valeur du cookie chiffré `XSRF-TOKEN`. Si vous n'utilisez pas cette librairie, vous devrez configurer cela vous même dans votre application.
 
 <a name="csrf-excluding-uris"></a>
-## Excluding URIs From CSRF Protection
+## Exclusion d'URIs de la Protection CSRF
 
-Sometimes you may wish to exclude a set of URIs from CSRF protection. For example, if you are using [Stripe](https://stripe.com) to process payments and are utilizing their webhook system, you will need to exclude your Stripe webhook handler route from CSRF protection since Stripe will not know what CSRF token to send to your routes.
+Parfois, vous voudrez exclure un ensemble d'URIs de la protection CSRF. Par exemple, si vous utilisez [Stripe](https://stripe.com) pour traiter les paiements et utilisez leur système de webhook, il vous sera nécessaire d'exclure la route vers la cible du webhook de Stripe (sur votre application) de la protection CSRF étant donné que Stripe ne saura pas quel jeton CSRF envoyer à votre route.
 
-Typically, you should place these kinds of routes outside of the `web` middleware group that the `RouteServiceProvider` applies to all routes in the `routes/web.php` file. However, you may also exclude the routes by adding their URIs to the `$except` property of the `VerifyCsrfToken` middleware:
+Typiquement, vous devriez sortir ce genre de route du groupe de middleware `web` que le `RouteServiceProvider` applique à toutes les routes dans le fichier `routes/web.php`. Cependant, vous pouvez aussi exclure des routes en ajoutant leurs URIs à la propriété `$except` du middleware `VerifyCsrfToken`:
 
     <?php
 
@@ -52,16 +52,16 @@ Typically, you should place these kinds of routes outside of the `web` middlewar
         ];
     }
 
-> {tip} The CSRF middleware is automatically disabled when [running tests](/docs/{{version}}/testing).
+> {tip} Le middleware CSRF est automatiquement désactivé lors des [tests](testing).
 
 <a name="csrf-x-csrf-token"></a>
 ## X-CSRF-TOKEN
 
-In addition to checking for the CSRF token as a POST parameter, the `VerifyCsrfToken` middleware will also check for the `X-CSRF-TOKEN` request header. You could, for example, store the token in an HTML `meta` tag:
+En plus de vérifier le jeton CSRF dans les données POST, le middleware `VerifyCsrfToken` vérifiera aussi l'en-tête HTTP `X-CSRF-TOKEN`. Vous pourriez, par exemple, stocker le jeton dans une balise HTML `meta`:
 
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-Then, once you have created the `meta` tag, you can instruct a library like jQuery to automatically add the token to all request headers. This provides simple, convenient CSRF protection for your AJAX based applications:
+Ensuite, après avoir créé la balise `meta`, vous pouvez configurer une bibliothèque comme jQuery pour qu'elle ajoute automatiquement le jeton dans les en-têtes de chaque requête. Cela permet une protection CSRF simple et convenient pour votre application basée sur AJAX:
 
     $.ajaxSetup({
         headers: {
@@ -72,8 +72,8 @@ Then, once you have created the `meta` tag, you can instruct a library like jQue
 <a name="csrf-x-xsrf-token"></a>
 ## X-XSRF-TOKEN
 
-Laravel stores the current CSRF token in an encrypted `XSRF-TOKEN` cookie that is included with each response generated by the framework. You can use the cookie value to set the `X-XSRF-TOKEN` request header.
+Laravel stocke le jeton CSRF actuel dans un cookie chiffré `XSRF-TOKEN` qui est inclut dans chaque réponse générée par le framework. Vous pouvez utiliser la valeur du cookie comme valeur de l'en-tête `X-XSRF-TOKEN`.
 
-This cookie is primarily sent as a convenience since some JavaScript frameworks and libraries, like Angular and Axios, automatically place its value in the `X-XSRF-TOKEN` header on same-origin requests.
+Ce cookie est principalement envoyé par commodité car certains frameworks et bibliothèques JavaScript, comme Angular et Axios, utilisent automatiquement sa valeur dans l'en-tête `X-XSRF-TOKEN` header sur les requêtes à destination de l'application (*same-origin*).
 
-> {tip} By default, the `resources/js/bootstrap.js` file includes the Axios HTTP library which will automatically send this for you.
+> {tip} Par défaut, le fichier `resources/js/bootstrap.js` inclut la librarie HTTP Axios qui l'enverra automatiquement pour vous.
